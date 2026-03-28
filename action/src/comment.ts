@@ -22,7 +22,11 @@ export function formatComment(
   const informational = findings.filter((f) => f.severity === "info");
 
   let body = COMMENT_MARKER + "\n\n";
-  body += `> Reviewed ${metadata.reviewedPRs} past PRs · ${metadata.relevantDecisions} relevant decisions found · confidence threshold ${config.confidenceThreshold}\n\n`;
+  body += `| Metric | Value |\n`;
+  body += `|--------|-------|\n`;
+  body += `| PRs reviewed | ${metadata.reviewedPRs} |\n`;
+  body += `| Relevant decisions | ${metadata.relevantDecisions} |\n`;
+  body += `| Confidence threshold | ${config.confidenceThreshold} |\n\n`;
 
   if (conflicts.length > 0) {
     body += "### \u26a0\ufe0f Potential conflicts\n\n";
