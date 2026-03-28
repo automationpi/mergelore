@@ -27,7 +27,7 @@ inputs:
     default: "20"
   confidence-threshold:
     description: Minimum confidence score to post a finding (0.0–1.0)
-    default: "0.7"
+    default: "0.3"
   vector-store-url:
     description: Qdrant or pgvector URL (future use)
     required: false

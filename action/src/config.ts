@@ -27,7 +27,7 @@ export function parseConfig(): ActionConfig {
   }
 
   const confidenceThreshold = parseFloat(
-    core.getInput("confidence-threshold") || "0.7",
+    core.getInput("confidence-threshold") || "0.3",
   );
   if (
     isNaN(confidenceThreshold) ||
