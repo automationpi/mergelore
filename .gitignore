@@ -3,3 +3,10 @@ dist/
 *.tgz
 .env
 .env.*
+
+# Claude Code
+.claude/
+
+# Internal docs
+docs/
+PLAN.md
