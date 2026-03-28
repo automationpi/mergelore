@@ -1,0 +1,43 @@
+name: mergelore
+description: Institutional memory for AI-generated PRs — surfaces past decisions, reversed patterns, and constraint violations
+author: automationpi
+
+branding:
+  icon: book-open
+  color: purple
+
+inputs:
+  anthropic-api-key:
+    description: Anthropic API key (required for claude provider)
+    required: false
+  openai-api-key:
+    description: OpenAI API key (required for openai provider)
+    required: false
+  github-token:
+    description: GitHub token for API access
+    default: ${{ github.token }}
+  memory-provider:
+    description: "Memory provider: none | git-native"
+    default: git-native
+  llm-provider:
+    description: "LLM provider: claude | openai"
+    default: claude
+  history-depth:
+    description: Number of past merged PRs to retrieve (git-native mode)
+    default: "20"
+  confidence-threshold:
+    description: Minimum confidence score to post a finding (0.0–1.0)
+    default: "0.7"
+  vector-store-url:
+    description: Qdrant or pgvector URL (future use)
+    required: false
+  block-on-critical:
+    description: Fail CI when critical findings are detected
+    default: "false"
+  timeout:
+    description: Timeout in milliseconds for LLM and memory queries
+    default: "45000"
+
+runs:
+  using: node20
+  main: dist/index.js

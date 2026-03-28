@@ -1,0 +1,45 @@
+import Anthropic from "@anthropic-ai/sdk";
+import type { Diff, Context, Finding, LLMProvider } from "../../types.js";
+import {
+  buildSystemPrompt,
+  buildUserMessage,
+  mapRawFindings,
+  FINDING_SCHEMA,
+  type RawFinding,
+} from "./prompts.js";
+
+export class ClaudeLLMProvider implements LLMProvider {
+  readonly name = "claude";
+  private readonly client: Anthropic;
+
+  constructor(apiKey: string) {
+    this.client = new Anthropic({ apiKey });
+  }
+
+  async analyze(diff: Diff, context: Context[]): Promise<Finding[]> {
+    const response = await this.client.messages.create({
+      model: "claude-sonnet-4-5-20250514",
+      max_tokens: 4096,
+      system: buildSystemPrompt(),
+      tools: [
+        {
+          name: "report_findings",
+          description:
+            "Report the analysis findings for this PR diff. Call this tool with all findings.",
+          input_schema: FINDING_SCHEMA,
+        },
+      ],
+      tool_choice: { type: "tool", name: "report_findings" },
+      messages: [{ role: "user", content: buildUserMessage(diff, context) }],
+    });
+
+    for (const block of response.content) {
+      if (block.type === "tool_use" && block.name === "report_findings") {
+        const input = block.input as { findings: RawFinding[] };
+        return mapRawFindings(input.findings, context);
+      }
+    }
+
+    return [];
+  }
+}

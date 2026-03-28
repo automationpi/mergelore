@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: action
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: action/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify bundle size
+        run: |
+          BUNDLE_SIZE=$(stat -c%s dist/index.js)
+          echo "Bundle size: $BUNDLE_SIZE bytes ($(( BUNDLE_SIZE / 1024 ))KB)"
+          if [ "$BUNDLE_SIZE" -gt 2097152 ]; then
+            echo "::error::Bundle size exceeds 2MB limit"
+            exit 1
+          fi
