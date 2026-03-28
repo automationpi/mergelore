@@ -6,6 +6,7 @@ dist/
 
 # Claude Code
 .claude/
+CLAUDE.md
 
 # Internal docs
 docs/
