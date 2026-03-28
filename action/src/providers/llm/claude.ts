@@ -18,7 +18,7 @@ export class ClaudeLLMProvider implements LLMProvider {
 
   async analyze(diff: Diff, context: Context[]): Promise<Finding[]> {
     const response = await this.client.messages.create({
-      model: "claude-sonnet-4-5-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 4096,
       system: buildSystemPrompt(),
       tools: [
