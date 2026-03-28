@@ -22,7 +22,7 @@ export class ClaudeLLMProvider implements LLMProvider {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         const response = await this.client.messages.create({
-          model: "claude-sonnet-4-5-20250514",
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 4096,
           system: buildSystemPrompt(),
           tools: [
