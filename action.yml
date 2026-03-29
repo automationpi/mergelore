@@ -1,5 +1,5 @@
 name: mergelore
-description: Institutional memory for AI-generated PRs - surfaces past decisions, reversed patterns, and constraint violations before they ship again
+description: Institutional memory for PRs - surfaces past decisions and reversed patterns before they ship again
 author: automationpi
 
 branding:
