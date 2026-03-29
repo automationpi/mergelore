@@ -138,9 +138,65 @@ Fetches your repo's recently merged PRs via the GitHub API. Scores them by file 
 
 This is the sweet spot for most teams.
 
-### `qdrant` — Vector search (Tier 2, coming in v0.2.0)
+### `qdrant` — Vector search (Tier 2)
 
-Semantic search over your full PR history using vector embeddings. For large repos with hundreds of PRs where recency-based retrieval isn't enough. Requires a Qdrant instance (self-hosted or managed).
+Search over your full indexed PR history using Qdrant. The separate **indexer** service embeds merged PRs into Qdrant after each merge. The action queries Qdrant by file path overlap — no embedding runs in CI.
+
+**Step 1:** Add the indexer workflow (runs on merge to main):
+
+```yaml
+name: mergelore-index
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  pull-requests: read
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: automationpi/mergelore/indexer@v0.2.0
+        with:
+          qdrant-url: ${{ secrets.QDRANT_URL }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+```
+
+**Step 2:** Update your mergelore review workflow:
+
+```yaml
+- uses: automationpi/mergelore@v0.2.0
+  with:
+    anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+    memory-provider: qdrant
+    vector-store-url: ${{ secrets.QDRANT_URL }}
+  env:
+    QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+```
+
+If Qdrant is unreachable, mergelore automatically falls back to `git-native` with a warning.
+
+#### Supported embedding models
+
+| Model | Provider | Dimensions | Cost |
+|-------|----------|-----------|------|
+| `text-embedding-3-small` | OpenAI | 1536 | Low |
+| `nomic-embed-text` | Local (CPU) | 768 | Free |
+| `embed-english-v3.0` | Cohere | 1024 | Low |
+
+Set via the `embed-model` input on the indexer action (default: `text-embedding-3-small`).
+
+#### Image signing
+
+All release images are signed with cosign keyless signing (Sigstore). Verify with:
+
+```bash
+cosign verify ghcr.io/automationpi/mergelore-action:v0.2.0
+cosign verify ghcr.io/automationpi/mergelore-indexer:v0.2.0
+```
 
 ## Human-in-the-loop
 
@@ -176,7 +232,19 @@ action/
       memory/
         none.ts                 # Tier 0: no memory
         git-native.ts           # Tier 1: GitHub API
+        qdrant.ts               # Tier 2: Qdrant vector store
         factory.ts              # Provider factory
+indexer/                          # Async embedding service (Python 3.12)
+  src/mergelore_indexer/
+    main.py                       # CLI entry point
+    extract.py                    # PR content extraction
+    chunk.py                      # 512-token chunking with 64-token overlap
+    embed/                        # Pluggable embedding providers
+      openai_embed.py             # text-embedding-3-small
+      nomic.py                    # nomic-embed-text (local)
+      cohere_embed.py             # embed-english-v3.0
+    store/
+      qdrant_store.py             # Qdrant client wrapper
 ```
 
 ### Plugin interfaces
@@ -232,8 +300,8 @@ docker images mergelore/action --format '{{.Size}}'  # target: <50MB
 
 | Version | What ships |
 |---------|-----------|
-| **v0.1.0** | Core action, Claude + OpenAI providers, git-native memory, HITL slash commands |
-| v0.2.0 | Qdrant memory provider, async indexer service, cosign image signing |
+| v0.1.0 | Core action, Claude + OpenAI providers, git-native memory, HITL slash commands |
+| **v0.2.0** | Qdrant memory provider, Python indexer, Trivy scanning, cosign image signing |
 | v0.3.0 | Helm chart, webhook receiver, pgvector support |
 
 ## License

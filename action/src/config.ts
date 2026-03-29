@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import type { ActionConfig, LLMProviderName, MemoryProviderName } from "./types.js";
 
 const VALID_LLM_PROVIDERS: LLMProviderName[] = ["claude", "openai"];
-const VALID_MEMORY_PROVIDERS: MemoryProviderName[] = ["none", "git-native"];
+const VALID_MEMORY_PROVIDERS: MemoryProviderName[] = ["none", "git-native", "qdrant"];
 
 export function parseConfig(): ActionConfig {
   const llmProvider = core.getInput("llm-provider") || "claude";
@@ -40,6 +40,13 @@ export function parseConfig(): ActionConfig {
   }
 
   const anthropicApiKey = core.getInput("anthropic-api-key");
+  const vectorStoreUrl = core.getInput("vector-store-url") || undefined;
+  if (memoryProvider === "qdrant" && !vectorStoreUrl) {
+    throw new Error(
+      "mergelore: vector-store-url is required when using the qdrant provider. Set it to your Qdrant instance URL.",
+    );
+  }
+
   if (llmProvider === "claude" && !anthropicApiKey) {
     throw new Error(
       "mergelore: anthropic-api-key is required when using the claude provider. Add it as a secret in your workflow.",
@@ -54,7 +61,8 @@ export function parseConfig(): ActionConfig {
     llmProvider: llmProvider as LLMProviderName,
     historyDepth,
     confidenceThreshold,
-    vectorStoreUrl: core.getInput("vector-store-url") || undefined,
+    vectorStoreUrl,
+    qdrantApiKey: process.env.QDRANT_API_KEY || undefined,
     blockOnCritical: core.getInput("block-on-critical") === "true",
     timeout: parseInt(core.getInput("timeout") || "45000", 10),
   };

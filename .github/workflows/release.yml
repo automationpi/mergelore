@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   packages: write
+  id-token: write  # Required for cosign keyless signing
 
 jobs:
   release:
@@ -21,7 +22,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: action/package-lock.json
 
-      - name: Install and build
+      - name: Install and build action
         working-directory: action
         run: |
           npm ci
@@ -49,7 +50,23 @@ jobs:
         id: version
         run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
-      - name: Build and push Docker image
+      # --- Action image: scan, build, push, sign ---
+      - name: Build action image (scan target)
+        uses: docker/build-push-action@v6
+        with:
+          context: action
+          push: false
+          load: true
+          tags: mergelore/action:scan
+
+      - name: Trivy scan action image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: mergelore/action:scan
+          severity: CRITICAL
+          exit-code: 1
+
+      - name: Build and push action image (multi-arch)
         uses: docker/build-push-action@v6
         with:
           context: action
@@ -61,6 +78,56 @@ jobs:
             mergelore/action:latest
             mergelore/action:${{ steps.version.outputs.tag }}
 
+      # --- Indexer image: scan, build, push, sign ---
+      - name: Build indexer image (scan target)
+        uses: docker/build-push-action@v6
+        with:
+          context: indexer
+          push: false
+          load: true
+          tags: mergelore/indexer:scan
+
+      - name: Trivy scan indexer image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: mergelore/indexer:scan
+          severity: CRITICAL
+          exit-code: 1
+
+      - name: Build and push indexer image (multi-arch)
+        uses: docker/build-push-action@v6
+        with:
+          context: indexer
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/automationpi/mergelore-indexer:latest
+            ghcr.io/automationpi/mergelore-indexer:${{ steps.version.outputs.tag }}
+            mergelore/indexer:latest
+            mergelore/indexer:${{ steps.version.outputs.tag }}
+
+      # --- Cosign keyless signing ---
+      - name: Install cosign
+        if: github.repository == 'automationpi/mergelore'
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign action images
+        if: github.repository == 'automationpi/mergelore'
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes ghcr.io/automationpi/mergelore-action:${{ steps.version.outputs.tag }}
+          cosign sign --yes mergelore/action:${{ steps.version.outputs.tag }}
+
+      - name: Sign indexer images
+        if: github.repository == 'automationpi/mergelore'
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes ghcr.io/automationpi/mergelore-indexer:${{ steps.version.outputs.tag }}
+          cosign sign --yes mergelore/indexer:${{ steps.version.outputs.tag }}
+
+      # --- GitHub Release ---
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:

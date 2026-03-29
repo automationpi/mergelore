@@ -2,6 +2,7 @@ import type { GitHub } from "@actions/github/lib/utils.js";
 import type { ActionConfig, MemoryProvider } from "../../types.js";
 import { NoneMemoryProvider } from "./none.js";
 import { GitNativeMemoryProvider } from "./git-native.js";
+import { QdrantMemoryProvider } from "./qdrant.js";
 
 type Octokit = InstanceType<typeof GitHub>;
 
@@ -25,10 +26,25 @@ export function createMemoryProvider(options: MemoryFactoryOptions): MemoryProvi
         historyDepth: options.config.historyDepth,
       });
 
+    case "qdrant":
+      if (!options.config.vectorStoreUrl) {
+        throw new Error(
+          "mergelore: qdrant provider requires vector-store-url. Set it to your Qdrant instance URL.",
+        );
+      }
+      return new QdrantMemoryProvider({
+        vectorStoreUrl: options.config.vectorStoreUrl,
+        apiKey: options.config.qdrantApiKey,
+        octokit: options.octokit,
+        owner: options.owner,
+        repo: options.repo,
+        historyDepth: options.config.historyDepth,
+      });
+
     default: {
       const exhaustive: never = options.config.memoryProvider;
       throw new Error(
-        `mergelore: Unknown memory provider "${exhaustive}". Valid options: none, git-native`,
+        `mergelore: Unknown memory provider "${exhaustive}". Valid options: none, git-native, qdrant`,
       );
     }
   }

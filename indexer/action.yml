@@ -1,0 +1,22 @@
+name: mergelore-indexer
+description: Index merged PRs into a vector store for mergelore institutional memory
+author: automationpi
+
+branding:
+  icon: database
+  color: blue
+
+inputs:
+  embed-model:
+    description: "Embedding model: text-embedding-3-small | nomic-embed-text | embed-english-v3.0"
+    default: text-embedding-3-small
+  qdrant-url:
+    description: Qdrant URL (e.g., http://qdrant:6333)
+    required: true
+
+runs:
+  using: docker
+  image: Dockerfile
+  env:
+    MERGELORE_EMBED_MODEL: ${{ inputs.embed-model }}
+    MERGELORE_QDRANT_URL: ${{ inputs.qdrant-url }}

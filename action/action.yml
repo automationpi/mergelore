@@ -17,7 +17,7 @@ inputs:
     description: GitHub token for API access
     default: ${{ github.token }}
   memory-provider:
-    description: "Memory provider: none | git-native"
+    description: "Memory provider: none | git-native | qdrant"
     default: git-native
   llm-provider:
     description: "LLM provider: claude | openai"
@@ -29,7 +29,7 @@ inputs:
     description: Minimum confidence score to post a finding (0.0–1.0)
     default: "0.7"
   vector-store-url:
-    description: Qdrant or pgvector URL (future use)
+    description: Qdrant URL (required for qdrant provider)
     required: false
   block-on-critical:
     description: Fail CI when critical findings are detected

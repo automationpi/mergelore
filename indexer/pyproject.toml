@@ -1,0 +1,27 @@
+[project]
+name = "mergelore-indexer"
+version = "0.2.0"
+description = "Async PR embedding service for mergelore institutional memory"
+requires-python = ">=3.12"
+license = "MIT"
+dependencies = [
+    "qdrant-client>=1.12.0",
+    "openai>=1.60.0",
+    "cohere>=5.0.0",
+    "tiktoken>=0.8.0",
+    "PyGithub>=2.5.0",
+]
+
+[project.optional-dependencies]
+local = ["sentence-transformers>=3.0.0"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24", "pytest-cov", "ruff"]
+
+[project.scripts]
+mergelore-index = "mergelore_indexer.main:main"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

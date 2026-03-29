@@ -71,7 +71,7 @@ export interface MemoryProvider {
 // --- Config ---
 
 export type LLMProviderName = "claude" | "openai";
-export type MemoryProviderName = "none" | "git-native";
+export type MemoryProviderName = "none" | "git-native" | "qdrant";
 
 export interface ActionConfig {
   anthropicApiKey: string;
@@ -82,6 +82,7 @@ export interface ActionConfig {
   historyDepth: number;
   confidenceThreshold: number;
   vectorStoreUrl?: string;
+  qdrantApiKey?: string;
   blockOnCritical: boolean;
   timeout: number;
 }

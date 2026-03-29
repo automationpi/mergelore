@@ -1,3 +1,4 @@
+# Node
 node_modules/
 dist/
 !action/dist/
@@ -8,6 +9,14 @@ dist/
 # Claude Code
 .claude/
 CLAUDE.md
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.ruff_cache/
+.venv/
 
 # Internal docs
 docs/
