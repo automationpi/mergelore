@@ -14,7 +14,7 @@ mergelore is a GitHub Action that reviews pull requests against your team's hist
 
 ## The problem
 
-AI coding tools (Claude Code, Copilot, Cursor, Codex) generate code that looks correct in isolation. But they have zero awareness of your team's history — the decisions made in past PRs, the patterns deliberately removed, the limits that were hardcoded for a reason.
+AI coding tools (Claude Code, Copilot, Cursor, Codex) generate code that looks correct in isolation. But they have zero awareness of your team's history -the decisions made in past PRs, the patterns deliberately removed, the limits that were hardcoded for a reason.
 
 Every existing review tool analyzes the **present diff**. None of them remember *why* past decisions were made.
 
@@ -22,45 +22,63 @@ mergelore bridges that gap.
 
 ## How it works
 
-```
-PR opened
-  |
-  v
-Extract diff from the PR
-  |
-  v
-Query past merged PRs for relevant decisions (memory provider)
-  |
-  v
-Send diff + historical context to an LLM for analysis (LLM provider)
-  |
-  v
-Post findings as a structured PR comment with confidence scores
+```mermaid
+flowchart LR
+    A["PR opened"] --> B["Extract diff"]
+    B --> C["Query past decisions\n(memory provider)"]
+    C --> D["LLM analyzes\ndiff + context"]
+    D --> E["Post findings\nwith confidence scores"]
+
+    style A fill:#1e293b,stroke:#34D399,color:#E2E8F0
+    style B fill:#1e293b,stroke:#64748B,color:#E2E8F0
+    style C fill:#1e293b,stroke:#7B61FF,color:#E2E8F0
+    style D fill:#1e293b,stroke:#7B61FF,color:#E2E8F0
+    style E fill:#1e293b,stroke:#34D399,color:#E2E8F0
 ```
 
 mergelore runs entirely in your CI pipeline. No data leaves your GitHub Actions runner except API calls to the LLM provider you choose.
 
-### What a mergelore comment looks like
+### What it catches
 
-When mergelore finds something, it posts a comment like this:
-
-```markdown
-## mergelore findings
-
-> Reviewed 12 past PRs · 3 relevant decisions found · confidence threshold 0.7
-
-### ⚠️ Potential conflicts
-
-**Pattern reversal: legacy auth middleware** · confidence: 0.88
-> This PR re-introduces the session-based auth middleware that was removed in PR #42
-> due to compliance requirements around token storage. The new code uses the same
-> session pattern that legal flagged.
-> Source: PR #42 · 2026-01-15
-
-`/mergelore-acknowledge` · `/mergelore-override [reason]` · `/mergelore-update-record`
+**Backend: Connection pool limit re-introduced after outage**
+```
+Connection pool limit conflicts with post-mortem decision - confidence: 0.92
+> PR #287 reduced Redis maxConnections from 100 to 20 after a production
+> outage where the pool exhausted file descriptors under load.
+> This PR sets maxConnections back to 100, directly reversing that decision.
+> Source: PR #287 - 2025-11-14
 ```
 
-Findings are **suggestions, not blocks** — unless you explicitly opt into `block-on-critical`.
+**Frontend: Accessibility violation**
+```
+Custom dropdown conflicts with accessibility policy - confidence: 0.88
+> PR #156 replaced all custom div-based dropdowns with native <select>
+> elements and ARIA roles to meet WCAG 2.1 AA compliance.
+> This PR introduces a new div-based dropdown in UserSettings.
+> Source: PR #156 - 2025-08-22
+```
+
+**Database: Migration pattern already caused downtime**
+```
+Column default on large table conflicts with migration policy - confidence: 0.90
+> PR #412 attempted ADD COLUMN with DEFAULT on the users table (50M+ rows).
+> The migration locked the table for 8 minutes in production.
+> Policy: large tables must ADD COLUMN without DEFAULT, then backfill.
+> Source: PR #415 - 2026-01-05
+```
+
+**API: Rate limit deliberately hardcoded after incident**
+```
+Configurable rate limit conflicts with hardcoding decision - confidence: 0.85
+> PR #203 hardcoded the API rate limit to 100 req/s after a misconfigured
+> env var allowed 10,000 req/s and overwhelmed the billing service.
+> This PR makes the rate limit configurable via environment variable.
+> Source: PR #203 - 2025-09-30
+```
+
+Findings are **suggestions, not blocks** - unless you explicitly opt into `block-on-critical`.
+
+> See the [full quickstart guide](https://gist.github.com/automationpi/2160dd02ea6b4628e7658fcb4bd816e5) for more examples and detailed setup instructions.
 
 ## Quickstart
 
@@ -83,19 +101,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: automationpi/mergelore@v0.1.0
+      - uses: automationpi/mergelore/action@v0.2.0
         with:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
-That's it. Eight lines of YAML and an API key.
+That's it. Add your `ANTHROPIC_API_KEY` as a repo secret and every PR gets reviewed.
 
 ## Configuration
 
 | Input | Default | Description |
 |-------|---------|-------------|
-| `anthropic-api-key` | — | Anthropic API key (required for `claude` provider) |
-| `openai-api-key` | — | OpenAI API key (required for `openai` provider) |
+| `anthropic-api-key` | -| Anthropic API key (required for `claude` provider) |
+| `openai-api-key` | -| OpenAI API key (required for `openai` provider) |
 | `llm-provider` | `claude` | LLM to use for analysis: `claude` or `openai` |
 | `memory-provider` | `git-native` | How to retrieve past decisions: `none` or `git-native` |
 | `history-depth` | `20` | Number of past merged PRs to search |
@@ -106,7 +124,7 @@ That's it. Eight lines of YAML and an API key.
 ### Using OpenAI instead of Claude
 
 ```yaml
-- uses: automationpi/mergelore@v0.1.0
+- uses: automationpi/mergelore/action@v0.2.0
   with:
     llm-provider: openai
     openai-api-key: ${{ secrets.OPENAI_API_KEY }}
@@ -117,7 +135,7 @@ That's it. Eight lines of YAML and an API key.
 If you just want LLM-powered diff review without historical context:
 
 ```yaml
-- uses: automationpi/mergelore@v0.1.0
+- uses: automationpi/mergelore/action@v0.2.0
   with:
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
     memory-provider: none
@@ -126,7 +144,7 @@ If you just want LLM-powered diff review without historical context:
 ### Blocking on critical findings
 
 ```yaml
-- uses: automationpi/mergelore@v0.1.0
+- uses: automationpi/mergelore/action@v0.2.0
   with:
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
     block-on-critical: true
@@ -136,19 +154,19 @@ If you just want LLM-powered diff review without historical context:
 
 mergelore has a plugin architecture. You pick how it remembers your team's decisions.
 
-### `none` — No memory (Tier 0)
+### `none` -No memory (Tier 0)
 
 The LLM reviews the diff on its own merits. No historical context. Good for trying mergelore out or small repos where past decisions are few.
 
-### `git-native` — GitHub API (Tier 1, default)
+### `git-native` -GitHub API (Tier 1, default)
 
-Fetches your repo's recently merged PRs via the GitHub API. Scores them by file overlap with the current diff and sends the most relevant ones as context to the LLM. No extra infrastructure needed — it uses the `GITHUB_TOKEN` already available in Actions.
+Fetches your repo's recently merged PRs via the GitHub API. Scores them by file overlap with the current diff and sends the most relevant ones as context to the LLM. No extra infrastructure needed -it uses the `GITHUB_TOKEN` already available in Actions.
 
 This is the sweet spot for most teams.
 
-### `qdrant` — Vector search (Tier 2)
+### `qdrant` -Vector search (Tier 2)
 
-Search over your full indexed PR history using Qdrant. The separate **indexer** service embeds merged PRs into Qdrant after each merge. The action queries Qdrant by file path overlap — no embedding runs in CI.
+Search over your full indexed PR history using Qdrant. The separate **indexer** service embeds merged PRs into Qdrant after each merge. The action queries Qdrant by file path overlap -no embedding runs in CI.
 
 **Step 1:** Add the indexer workflow (runs on merge to main):
 
@@ -213,8 +231,8 @@ mergelore is an advisory tool, not an autonomous blocker. Every finding comes wi
 | Command | What it does |
 |---------|-------------|
 | `/mergelore-acknowledge` | "I saw this, I understand, continuing anyway" |
-| `/mergelore-override [reason]` | "I disagree — here's why" (reason is stored as a decision record) |
-| `/mergelore-update-record` | "This PR IS the new decision — update the memory after merge" |
+| `/mergelore-override [reason]` | "I disagree -here's why" (reason is stored as a decision record) |
+| `/mergelore-update-record` | "This PR IS the new decision -update the memory after merge" |
 
 **Override decisions are written back as data.** When someone overrides a finding with a reason, that reason becomes part of the institutional memory. Over time, mergelore learns what your team's actual standards are.
 
@@ -223,7 +241,7 @@ mergelore is an advisory tool, not an autonomous blocker. Every finding comes wi
 ```
 action/
   src/
-    index.ts                    # Main runner — thin orchestrator
+    index.ts                    # Main runner -thin orchestrator
     types.ts                    # Shared types (Diff, Context, Finding)
     diff.ts                     # PR diff extraction via GitHub API
     comment.ts                  # PR comment formatter (locked format)
@@ -277,7 +295,7 @@ Adding a new LLM or memory provider means implementing one interface and adding 
 - **All LLM calls use structured output.** No free text parsing. Claude uses `tool_use`, OpenAI uses `json_schema`.
 - **Confidence scores are mandatory.** Every finding has a score between 0.0 and 1.0. Below the threshold, it doesn't get posted.
 - **Providers are stateless.** No singleton state, no class-level caching. Every invocation is independent.
-- **Graceful degradation everywhere.** If the LLM API is down, mergelore posts a warning — it never breaks your CI.
+- **Graceful degradation everywhere.** If the LLM API is down, mergelore posts a warning -it never breaks your CI.
 - **Findings are suggestions.** mergelore never blocks a PR unless you explicitly set `block-on-critical: true`.
 
 ## Development
