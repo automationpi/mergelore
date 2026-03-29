@@ -7,6 +7,14 @@
 <p align="center"><strong>Give your PRs the institutional memory that AI-generated code lacks.</strong></p>
 
 <p align="center">
+  <a href="https://github.com/automationpi/mergelore/actions/workflows/ci.yml"><img src="https://github.com/automationpi/mergelore/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/automationpi/mergelore/releases"><img src="https://img.shields.io/github/v/release/automationpi/mergelore" alt="Release"></a>
+  <a href="https://github.com/automationpi/mergelore/blob/main/LICENSE"><img src="https://img.shields.io/github/license/automationpi/mergelore" alt="License"></a>
+  <a href="https://hub.docker.com/r/automationpi/mergelore-action"><img src="https://img.shields.io/docker/pulls/automationpi/mergelore-action" alt="Docker Pulls"></a>
+  <a href="https://ghcr.io/automationpi/mergelore-action"><img src="https://img.shields.io/badge/GHCR-mergelore--action-blue?logo=github" alt="GHCR"></a>
+</p>
+
+<p align="center">
   <img src="banner.svg" alt="mergelore - AI writes code, mergelore remembers why it was changed before" width="900" />
 </p>
 
