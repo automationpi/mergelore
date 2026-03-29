@@ -1,0 +1,44 @@
+# Tier 2: Qdrant vector memory - PR indexer
+# Runs after every merge to main. Extracts the merged PR content,
+# chunks it, embeds it with OpenAI, and stores it in Qdrant.
+# Use this together with tier2-qdrant-review.yml.
+#
+# Secrets needed:
+#   OPENAI_API_KEY  - get one at https://platform.openai.com (for embeddings)
+#   QDRANT_URL      - your Qdrant instance (e.g. https://xyz.cloud.qdrant.io)
+#   QDRANT_API_KEY  - from Qdrant Cloud dashboard
+#
+# Embedding models (set via MERGELORE_EMBED_MODEL):
+#   text-embedding-3-small  - OpenAI, 1536d, ~$0.02/1M tokens (default)
+#   nomic-embed-text        - local CPU, 768d, free
+#   embed-english-v3.0      - Cohere, 1024d, ~$0.01/1M tokens
+
+name: mergelore-index
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install indexer
+        run: pip install mergelore-indexer
+      - name: Index merged PR
+        run: mergelore-index
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MERGELORE_EMBED_MODEL: text-embedding-3-small
+          MERGELORE_QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}

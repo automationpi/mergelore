@@ -1,0 +1,32 @@
+# Block CI on critical findings
+# Use this when you want mergelore to fail the PR check if it detects
+# a critical conflict with a past decision. Good for repos where
+# certain patterns (security, compliance) must never be re-introduced.
+#
+# By default mergelore only posts comments and never blocks.
+# Set block-on-critical: true to opt in.
+#
+# Secrets needed:
+#   ANTHROPIC_API_KEY - get one at https://console.anthropic.com
+
+name: mergelore
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: automationpi/mergelore/action@v0.2.0
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          block-on-critical: "true"
+          confidence-threshold: "0.8"

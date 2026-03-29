@@ -1,0 +1,27 @@
+# Tier 0: LLM-only diff review (no history)
+# Just analyzes the PR diff with Claude. No past decisions, no extra infra.
+# Good for trying mergelore out on a repo.
+#
+# Secrets needed:
+#   ANTHROPIC_API_KEY - get one at https://console.anthropic.com
+
+name: mergelore
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: automationpi/mergelore/action@v0.2.0
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          memory-provider: none

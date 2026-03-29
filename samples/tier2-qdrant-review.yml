@@ -1,0 +1,34 @@
+# Tier 2: Qdrant vector memory - PR reviewer
+# Queries Qdrant for past decisions across your full indexed PR history.
+# Use this together with tier2-qdrant-index.yml.
+# Falls back to git-native automatically if Qdrant is unreachable.
+#
+# Secrets needed:
+#   ANTHROPIC_API_KEY - get one at https://console.anthropic.com
+#   QDRANT_URL        - your Qdrant instance (e.g. https://xyz.cloud.qdrant.io)
+#   QDRANT_API_KEY    - from Qdrant Cloud dashboard
+
+name: mergelore
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: automationpi/mergelore/action@v0.2.0
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          memory-provider: qdrant
+          vector-store-url: ${{ secrets.QDRANT_URL }}
+          confidence-threshold: "0.7"
+        env:
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}

@@ -1,0 +1,30 @@
+# Tier 1: Git-native memory (recommended for most teams)
+# Queries your repo's recent merged PRs via the GitHub API.
+# Scores them by file overlap with the current diff.
+# No extra infrastructure - uses the GITHUB_TOKEN already in Actions.
+#
+# Secrets needed:
+#   ANTHROPIC_API_KEY - get one at https://console.anthropic.com
+
+name: mergelore
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: automationpi/mergelore/action@v0.2.0
+        with:
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # memory-provider defaults to git-native
+          history-depth: "20"
+          confidence-threshold: "0.7"
