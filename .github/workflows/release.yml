@@ -57,12 +57,12 @@ jobs:
           context: action
           push: false
           load: true
-          tags: mergelore/action:scan
+          tags: automationpi/mergelore-action:scan
 
       - name: Trivy scan action image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: mergelore/action:scan
+          image-ref: automationpi/mergelore-action:scan
           severity: CRITICAL
           exit-code: 1
 
@@ -75,8 +75,8 @@ jobs:
           tags: |
             ghcr.io/automationpi/mergelore-action:latest
             ghcr.io/automationpi/mergelore-action:${{ steps.version.outputs.tag }}
-            mergelore/action:latest
-            mergelore/action:${{ steps.version.outputs.tag }}
+            automationpi/mergelore-action:latest
+            automationpi/mergelore-action:${{ steps.version.outputs.tag }}
 
       # --- Indexer image: scan, build, push, sign ---
       - name: Build indexer image (scan target)
@@ -85,12 +85,12 @@ jobs:
           context: indexer
           push: false
           load: true
-          tags: mergelore/indexer:scan
+          tags: automationpi/mergelore-indexer:scan
 
       - name: Trivy scan indexer image
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: mergelore/indexer:scan
+          image-ref: automationpi/mergelore-indexer:scan
           severity: CRITICAL
           exit-code: 1
 
@@ -103,8 +103,8 @@ jobs:
           tags: |
             ghcr.io/automationpi/mergelore-indexer:latest
             ghcr.io/automationpi/mergelore-indexer:${{ steps.version.outputs.tag }}
-            mergelore/indexer:latest
-            mergelore/indexer:${{ steps.version.outputs.tag }}
+            automationpi/mergelore-indexer:latest
+            automationpi/mergelore-indexer:${{ steps.version.outputs.tag }}
 
       # --- Cosign keyless signing ---
       - name: Install cosign
@@ -117,7 +117,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "1"
         run: |
           cosign sign --yes ghcr.io/automationpi/mergelore-action:${{ steps.version.outputs.tag }}
-          cosign sign --yes mergelore/action:${{ steps.version.outputs.tag }}
+          cosign sign --yes automationpi/mergelore-action:${{ steps.version.outputs.tag }}
 
       - name: Sign indexer images
         if: github.repository == 'automationpi/mergelore'
@@ -125,7 +125,7 @@ jobs:
           COSIGN_EXPERIMENTAL: "1"
         run: |
           cosign sign --yes ghcr.io/automationpi/mergelore-indexer:${{ steps.version.outputs.tag }}
-          cosign sign --yes mergelore/indexer:${{ steps.version.outputs.tag }}
+          cosign sign --yes automationpi/mergelore-indexer:${{ steps.version.outputs.tag }}
 
       # --- GitHub Release ---
       - name: Create GitHub Release
