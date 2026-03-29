@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: automationpi/mergelore/action@v0.2.0
+      - uses: automationpi/mergelore/action@v0.2.1
         with:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
@@ -168,7 +168,7 @@ That's it. Add your `ANTHROPIC_API_KEY` as a repo secret and every PR gets revie
 ### Using OpenAI instead of Claude
 
 ```yaml
-- uses: automationpi/mergelore/action@v0.2.0
+- uses: automationpi/mergelore/action@v0.2.1
   with:
     llm-provider: openai
     openai-api-key: ${{ secrets.OPENAI_API_KEY }}
@@ -179,7 +179,7 @@ That's it. Add your `ANTHROPIC_API_KEY` as a repo secret and every PR gets revie
 If you just want LLM-powered diff review without historical context:
 
 ```yaml
-- uses: automationpi/mergelore/action@v0.2.0
+- uses: automationpi/mergelore/action@v0.2.1
   with:
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
     memory-provider: none
@@ -188,7 +188,7 @@ If you just want LLM-powered diff review without historical context:
 ### Blocking on critical findings
 
 ```yaml
-- uses: automationpi/mergelore/action@v0.2.0
+- uses: automationpi/mergelore/action@v0.2.1
   with:
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
     block-on-critical: true
@@ -226,7 +226,7 @@ jobs:
   index:
     runs-on: ubuntu-latest
     steps:
-      - uses: automationpi/mergelore/indexer@v0.2.0
+      - uses: automationpi/mergelore/indexer@v0.2.1
         with:
           qdrant-url: ${{ secrets.QDRANT_URL }}
         env:
@@ -238,7 +238,7 @@ jobs:
 **Step 2:** Update your mergelore review workflow:
 
 ```yaml
-- uses: automationpi/mergelore@v0.2.0
+- uses: automationpi/mergelore@v0.2.1
   with:
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
     memory-provider: qdrant
@@ -264,8 +264,8 @@ Set via the `embed-model` input on the indexer action (default: `text-embedding-
 All release images are signed with cosign keyless signing (Sigstore). Verify with:
 
 ```bash
-cosign verify ghcr.io/automationpi/mergelore-action:v0.2.0
-cosign verify ghcr.io/automationpi/mergelore-indexer:v0.2.0
+cosign verify ghcr.io/automationpi/mergelore-action:v0.2.1
+cosign verify ghcr.io/automationpi/mergelore-indexer:v0.2.1
 ```
 
 ## Human-in-the-loop
@@ -386,7 +386,7 @@ docker images mergelore/action --format '{{.Size}}'  # target: <50MB
 | Version | What ships |
 |---------|-----------|
 | v0.1.0 | Core action, Claude + OpenAI providers, git-native memory, HITL slash commands |
-| **v0.2.0** | Qdrant memory provider, Python indexer, Trivy scanning, cosign image signing |
+| **v0.2.1** | Qdrant memory provider, Python indexer, Trivy scanning, cosign image signing |
 | v0.3.0 | Helm chart, webhook receiver, pgvector support |
 
 ## License
