@@ -6,7 +6,11 @@
 
 <p align="center"><strong>Give your PRs the institutional memory that AI-generated code lacks.</strong></p>
 
-mergelore is a GitHub Action that reviews pull requests against your team's history. When a PR re-introduces a pattern you already removed, reverses an architectural decision, or violates a constraint that was load-tested and hardcoded — mergelore flags it before it ships.
+<p align="center">
+  <img src="banner.svg" alt="mergelore - AI writes code, mergelore remembers why it was changed before" width="900" />
+</p>
+
+mergelore is a GitHub Action that reviews pull requests against your team's history. When a PR re-introduces a pattern you already removed, reverses an architectural decision, or violates a constraint that was load-tested and hardcoded - mergelore flags it before it ships.
 
 ## The problem
 
