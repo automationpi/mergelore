@@ -40,45 +40,81 @@ mergelore runs entirely in your CI pipeline. No data leaves your GitHub Actions 
 
 ### What it catches
 
+When a PR conflicts with a past decision, mergelore posts a finding directly on the PR with a confidence score, a plain-language explanation of what was decided before, and a link to the original PR. Every finding includes slash commands so the author can acknowledge, override with a reason, or mark the current PR as the new decision.
+
+Here are real scenarios that happen in every growing codebase:
+
+---
+
 **Backend: Connection pool limit re-introduced after outage**
+
+A new engineer adds a Redis connection pool with `maxConnections: 100`. Looks reasonable. But three months ago, your team debugged a production outage caused by exactly that - Redis was exhausting file descriptors at 100 connections. PR #287 reduced it to 20 with a detailed post-mortem.
+
 ```
 Connection pool limit conflicts with post-mortem decision - confidence: 0.92
 > PR #287 reduced Redis maxConnections from 100 to 20 after a production
-> outage where the pool exhausted file descriptors under load.
+> outage where the pool exhausted file descriptors under load. The post-mortem
+> explicitly recommended keeping this value low.
 > This PR sets maxConnections back to 100, directly reversing that decision.
 > Source: PR #287 - 2025-11-14
 ```
 
-**Frontend: Accessibility violation**
+---
+
+**Frontend: Removed accessibility pattern brought back**
+
+Copilot generates a custom dropdown using `<div onClick>`. Clean code, works fine. But your team spent two sprints replacing every custom dropdown with `<select>` and ARIA attributes after a WCAG audit. PR #156 documented the policy.
+
 ```
 Custom dropdown conflicts with accessibility policy - confidence: 0.88
 > PR #156 replaced all custom div-based dropdowns with native <select>
-> elements and ARIA roles to meet WCAG 2.1 AA compliance.
-> This PR introduces a new div-based dropdown in UserSettings.
+> elements and ARIA roles to meet WCAG 2.1 AA compliance. The review
+> comments note that custom dropdowns failed screen reader testing.
+> This PR introduces a new div-based dropdown component in UserSettings.
 > Source: PR #156 - 2025-08-22
 ```
 
-**Database: Migration pattern already caused downtime**
+---
+
+**Database: Migration pattern that already caused downtime**
+
+A PR adds `ALTER TABLE users ADD COLUMN preferences JSONB DEFAULT '{}'`. Looks standard. But PR #412 tried the same thing and was reverted - adding a default value on a 50M row table locked it for 8 minutes in production.
+
 ```
 Column default on large table conflicts with migration policy - confidence: 0.90
-> PR #412 attempted ADD COLUMN with DEFAULT on the users table (50M+ rows).
-> The migration locked the table for 8 minutes in production.
-> Policy: large tables must ADD COLUMN without DEFAULT, then backfill.
+> PR #412 attempted to add a JSONB column with a DEFAULT value to the users
+> table (50M+ rows). The migration locked the table for 8 minutes in production.
+> PR #415 documented the policy: large tables must use ADD COLUMN without
+> DEFAULT, then backfill in batches.
+> This PR adds a DEFAULT value to the same table.
 > Source: PR #415 - 2026-01-05
 ```
 
+---
+
 **API: Rate limit deliberately hardcoded after incident**
+
+Claude Code generates an API endpoint with configurable rate limiting via environment variable. Flexible, good practice - normally. But your team hardcoded the rate limit to 100 req/s after an incident where a misconfigured env var allowed 10,000 req/s and took down the billing service.
+
 ```
 Configurable rate limit conflicts with hardcoding decision - confidence: 0.85
-> PR #203 hardcoded the API rate limit to 100 req/s after a misconfigured
-> env var allowed 10,000 req/s and overwhelmed the billing service.
+> PR #203 hardcoded the API rate limit to 100 req/s after an incident where
+> a misconfigured RATE_LIMIT env var allowed 10,000 req/s and overwhelmed
+> the downstream billing service. The PR review explicitly decided against
+> making this configurable.
 > This PR makes the rate limit configurable via environment variable.
 > Source: PR #203 - 2025-09-30
 ```
 
+---
+
+Your reviewers are good. But they're reviewing 3x more PRs than last year - most of them AI-generated - across dozens of files they didn't write. No human can hold six months of architectural decisions in their head while reviewing their 12th PR of the day.
+
+mergelore doesn't replace your reviewers. It gives them the context they'd have if they personally reviewed every PR in the repo's history. The reviewer focuses on code quality. mergelore watches for decisions being silently undone.
+
 Findings are **suggestions, not blocks** - unless you explicitly opt into `block-on-critical`.
 
-> See the [full quickstart guide](https://gist.github.com/automationpi/2160dd02ea6b4628e7658fcb4bd816e5) for more examples and detailed setup instructions.
+> See the [full quickstart guide](https://gist.github.com/automationpi/2160dd02ea6b4628e7658fcb4bd816e5) for detailed setup instructions, architecture deep-dive, and more examples.
 
 ## Quickstart
 
