@@ -334,6 +334,21 @@ Adding a new LLM or memory provider means implementing one interface and adding 
 - **Graceful degradation everywhere.** If the LLM API is down, mergelore posts a warning -it never breaks your CI.
 - **Findings are suggestions.** mergelore never blocks a PR unless you explicitly set `block-on-critical: true`.
 
+## Where your data lives
+
+> **mergelore never stores your code on any third-party server.**
+
+| Tier | Data location | Who controls it |
+|------|--------------|-----------------|
+| Tier 0/1 (git-native) | No storage - queries GitHub API on the fly | GitHub (your existing infra) |
+| Tier 2 (Qdrant Cloud) | Your Qdrant Cloud cluster | You (free 1GB tier available) |
+| Tier 2 (self-hosted) | Your own Qdrant via Docker or Kubernetes | You (fully air-gapped) |
+
+- The action runs entirely on your GitHub Actions runner. The only external calls are to the LLM provider (Claude or OpenAI) for analysis.
+- The indexer writes embeddings to your Qdrant instance. No data passes through mergelore's infrastructure. There is no mergelore backend.
+- No telemetry. No call-home. No usage tracking. MIT licensed, fully auditable.
+- For regulated industries (pharma, finance, healthcare): self-host Qdrant in your own VPC, use `nomic-embed-text` for local CPU embedding (no API calls), and every byte stays inside your network.
+
 ## Development
 
 ```bash
