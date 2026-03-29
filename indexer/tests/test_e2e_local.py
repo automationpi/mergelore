@@ -1,20 +1,11 @@
 """End-to-end local test: extract → chunk → embed (mock) → upsert to in-memory Qdrant → query from Action provider."""
 
-import asyncio
-import json
-import subprocess
-import threading
-import time
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct, PayloadSchemaType
 
 from mergelore_indexer.chunk import chunk_text
-from mergelore_indexer.store.qdrant_store import QdrantStore
-from mergelore_indexer.store.interface import ChunkPayload
 
 
 # --- Test the full pipeline with in-memory Qdrant ---
@@ -142,7 +133,7 @@ Review comment: The session cleanup migration should run before this ships.
     score = len(overlap) / len(current_files)
     assert score == 1.0  # both query files are in files_touched
 
-    print(f"\n✅ Full pipeline test passed!")
+    print("\n✅ Full pipeline test passed!")
     print(f"   Chunks indexed: {len(chunks)}")
     print(f"   Points found: {len(points_found)}")
     print(f"   Unique PRs: {len(by_pr)}")
@@ -175,7 +166,8 @@ def test_multiple_prs_ranked_by_relevance(qdrant_memory):
         (12, "Update README", ["README.md"]),
     ]
 
-    import uuid, random
+    import uuid
+    import random
     random.seed(99)
     for pr_num, title, files in prs:
         point_id = str(uuid.uuid5(
@@ -238,5 +230,5 @@ def test_multiple_prs_ranked_by_relevance(qdrant_memory):
     assert scored[0] == (11, 1.0)
     assert scored[1] == (10, 0.5)
 
-    print(f"\n✅ Ranking test passed!")
+    print("\n✅ Ranking test passed!")
     print(f"   Results: {scored}")
