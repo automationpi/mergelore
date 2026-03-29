@@ -18,5 +18,8 @@ jobs:
       - uses: ./action
         with:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
-          memory-provider: git-native
+          memory-provider: qdrant
+          vector-store-url: ${{ secrets.QDRANT_URL }}
           confidence-threshold: "0.5"
+        env:
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
