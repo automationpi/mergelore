@@ -1,0 +1,23 @@
+name: Qdrant keepalive
+
+on:
+  schedule:
+    - cron: "0 8 * * *"  # Daily at 8am UTC
+  workflow_dispatch:       # Manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Qdrant cluster
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "api-key: $QDRANT_API_KEY" \
+            "$QDRANT_URL/collections")
+          echo "Qdrant responded with HTTP $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "::warning::Qdrant returned $STATUS"
+          fi
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
