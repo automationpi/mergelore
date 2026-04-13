@@ -210,7 +210,7 @@ This is the sweet spot for most teams.
 
 ### `qdrant` -Vector search (Tier 2)
 
-Search over your full indexed PR history using Qdrant. The separate **indexer** service embeds merged PRs into Qdrant after each merge. The action queries Qdrant by file path overlap -no embedding runs in CI.
+Search over your full indexed PR history using [Qdrant](https://qdrant.tech/) - an open-source vector database. The separate **indexer** service embeds merged PRs into Qdrant after each merge using local FastEmbed (no API key needed for embeddings). The action queries Qdrant by file path overlap - no embedding runs in CI.
 
 **Step 1:** Add the indexer workflow (runs on merge to main):
 
@@ -226,14 +226,21 @@ jobs:
   index:
     runs-on: ubuntu-latest
     steps:
-      - uses: automationpi/mergelore/indexer@v0.2.1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          qdrant-url: ${{ secrets.QDRANT_URL }}
+          python-version: "3.12"
+      - run: pip install mergelore-indexer
+      - run: mergelore-index
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MERGELORE_QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
 ```
+
+No `OPENAI_API_KEY` needed - embedding runs locally on CPU using FastEmbed.
 
 **Step 2:** Update your mergelore review workflow:
 
@@ -249,15 +256,30 @@ jobs:
 
 If Qdrant is unreachable, mergelore automatically falls back to `git-native` with a warning.
 
-#### Supported embedding models
+#### Secrets needed for Tier 2
 
-| Model | Provider | Dimensions | Cost |
-|-------|----------|-----------|------|
-| `text-embedding-3-small` | OpenAI | 1536 | Low |
-| `nomic-embed-text` | Local (CPU) | 768 | Free |
-| `embed-english-v3.0` | Cohere | 1024 | Low |
+Only 3 secrets - no embedding API key required:
 
-Set via the `embed-model` input on the indexer action (default: `text-embedding-3-small`).
+- `ANTHROPIC_API_KEY` - for LLM analysis ([console.anthropic.com](https://console.anthropic.com))
+- `QDRANT_URL` - your Qdrant instance ([cloud.qdrant.io](https://cloud.qdrant.io) - free 1GB, no credit card)
+- `QDRANT_API_KEY` - from Qdrant Cloud dashboard
+
+#### Embedding models
+
+The indexer uses local [FastEmbed](https://github.com/qdrant/fastembed) by default - no API key, runs on CPU in any GitHub Actions runner.
+
+**Local models (no API key):**
+
+- `bge-small-en-v1.5` - 384d, fast, good quality (default)
+- `all-MiniLM-L6-v2` - 384d, well-tested
+- `nomic-embed-text-v1.5` - 768d, best quality
+
+**API models (optional, install separately):**
+
+- `text-embedding-3-small` - OpenAI, 1536d, requires `pip install mergelore-indexer[openai]` + `OPENAI_API_KEY`
+- `embed-english-v3.0` - Cohere, 1024d, requires `pip install mergelore-indexer[cohere]` + `COHERE_API_KEY`
+
+Set via `MERGELORE_EMBED_MODEL` environment variable. If you switch models, the indexer automatically recreates the Qdrant collection with the correct dimensions.
 
 #### Image signing
 
