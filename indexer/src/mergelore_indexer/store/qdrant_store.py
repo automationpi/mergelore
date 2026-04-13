@@ -34,6 +34,20 @@ class QdrantStore:
         collections = await self._client.get_collections()
         existing = [c.name for c in collections.collections]
 
+        if self._collection in existing:
+            # Check if dimension matches - recreate if embedding model changed
+            info = await self._client.get_collection(self._collection)
+            current_dim = info.config.params.vectors.size
+            if current_dim != dimension:
+                emit_event(
+                    "collection_dimension_mismatch",
+                    collection=self._collection,
+                    expected=dimension,
+                    actual=current_dim,
+                )
+                await self._client.delete_collection(self._collection)
+                existing.remove(self._collection)
+
         if self._collection not in existing:
             await self._client.create_collection(
                 collection_name=self._collection,
