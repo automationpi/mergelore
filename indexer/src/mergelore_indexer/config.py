@@ -5,11 +5,9 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-VALID_EMBED_MODELS = [
-    "text-embedding-3-small",
-    "nomic-embed-text",
-    "embed-english-v3.0",
-]
+from .embed.factory import ALL_MODELS
+
+DEFAULT_EMBED_MODEL = "bge-small-en-v1.5"
 
 
 @dataclass(frozen=True)
@@ -37,11 +35,11 @@ def load_config() -> IndexerConfig:
     if not github_token:
         raise ValueError("GITHUB_TOKEN is required.")
 
-    embed_model = os.environ.get("MERGELORE_EMBED_MODEL", "text-embedding-3-small")
-    if embed_model not in VALID_EMBED_MODELS:
+    embed_model = os.environ.get("MERGELORE_EMBED_MODEL", DEFAULT_EMBED_MODEL)
+    if embed_model not in ALL_MODELS:
         raise ValueError(
             f"Invalid MERGELORE_EMBED_MODEL: '{embed_model}'. "
-            f"Valid options: {', '.join(VALID_EMBED_MODELS)}"
+            f"Valid options: {', '.join(ALL_MODELS)}"
         )
 
     qdrant_url = os.environ.get("MERGELORE_QDRANT_URL", "")

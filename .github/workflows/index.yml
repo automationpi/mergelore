@@ -23,9 +23,11 @@ jobs:
         run: mergelore-index
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGELORE_EMBED_MODEL: text-embedding-3-small
           MERGELORE_QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
+          # Default uses local FastEmbed (bge-small-en-v1.5) - no API key needed
+          # To use OpenAI embeddings instead, uncomment:
+          # MERGELORE_EMBED_MODEL: text-embedding-3-small
+          # OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

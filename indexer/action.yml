@@ -8,8 +8,8 @@ branding:
 
 inputs:
   embed-model:
-    description: "Embedding model: text-embedding-3-small | nomic-embed-text | embed-english-v3.0"
-    default: text-embedding-3-small
+    description: "Embedding model: bge-small-en-v1.5 (default, local) | all-MiniLM-L6-v2 | nomic-embed-text-v1.5 | text-embedding-3-small (OpenAI) | embed-english-v3.0 (Cohere)"
+    default: bge-small-en-v1.5
   qdrant-url:
     description: Qdrant URL (e.g., http://qdrant:6333)
     required: true
