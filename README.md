@@ -159,7 +159,7 @@ That's it. Add your `ANTHROPIC_API_KEY` as a repo secret and every PR gets revie
 | `anthropic-api-key` | -| Anthropic API key (required for `claude` provider) |
 | `openai-api-key` | -| OpenAI API key (required for `openai` provider) |
 | `llm-provider` | `claude` | LLM to use for analysis: `claude` or `openai` |
-| `memory-provider` | `git-native` | How to retrieve past decisions: `none` or `git-native` |
+| `memory-provider` | `git-native` | How to retrieve past decisions: `none`, `git-native`, or `qdrant` |
 | `history-depth` | `20` | Number of past merged PRs to search |
 | `confidence-threshold` | `0.7` | Minimum confidence (0.0-1.0) to post a finding |
 | `block-on-critical` | `false` | Fail CI on critical findings |
@@ -332,9 +332,9 @@ indexer/                          # Async embedding service (Python 3.12)
     extract.py                    # PR content extraction
     chunk.py                      # 512-token chunking with 64-token overlap
     embed/                        # Pluggable embedding providers
-      openai_embed.py             # text-embedding-3-small
-      nomic.py                    # nomic-embed-text (local)
-      cohere_embed.py             # embed-english-v3.0
+      fastembed_embed.py          # FastEmbed local CPU (default)
+      openai_embed.py             # text-embedding-3-small (optional)
+      cohere_embed.py             # embed-english-v3.0 (optional)
     store/
       qdrant_store.py             # Qdrant client wrapper
 ```
@@ -377,23 +377,39 @@ Adding a new LLM or memory provider means implementing one interface and adding 
 - The action runs entirely on your GitHub Actions runner. The only external calls are to the LLM provider (Claude or OpenAI) for analysis.
 - The indexer writes embeddings to your Qdrant instance. No data passes through mergelore's infrastructure. There is no mergelore backend.
 - No telemetry. No call-home. No usage tracking. MIT licensed, fully auditable.
-- For regulated industries (pharma, finance, healthcare): self-host Qdrant in your own VPC, use `nomic-embed-text` for local CPU embedding (no API calls), and every byte stays inside your network.
+- For regulated industries (pharma, finance, healthcare): self-host Qdrant in your own VPC, use FastEmbed for local CPU embedding (no external API calls), and every byte stays inside your network.
 
 ## Development
+
+### Action (TypeScript)
 
 ```bash
 cd action
 npm install
 npm run typecheck    # TypeScript strict mode
-npm test             # 41 unit tests
-npm run build        # esbuild single-file bundle → dist/index.js
+npm test             # 50 unit tests
+npm run build        # esbuild single-file bundle -> dist/index.js
+```
+
+### Indexer (Python)
+
+```bash
+cd indexer
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+ruff check src/ tests/   # lint
+pytest tests/ -v          # 25 unit + e2e tests
 ```
 
 ### Running tests
 
 ```bash
-npm test                    # unit tests only
-npm run test:integration    # integration tests (needs API keys)
+# Action
+cd action && npm test                     # unit tests
+cd action && npm run test:integration     # integration tests (needs API keys)
+
+# Indexer
+cd indexer && pytest tests/ -v            # unit + e2e tests
 ```
 
 ### Docker
